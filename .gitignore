@@ -1,0 +1,5 @@
+downloaded_pdfs/
+__pycache__/
+*txt
+.env
+.DS_Store
