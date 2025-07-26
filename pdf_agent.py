@@ -19,6 +19,8 @@ if 'persona' in st.session_state:
     st.session_state['prompt'] = persona_lookup.get(st.session_state['persona'], Personas.GABE)
 
 
+BASE_PROMPT = """You should use the provided documents to answer the user's question. If the answer is not in the documents, you can use your knowledge of Canadian tax law and the persona's voice to provide a helpful response. Always cite the source of your information when possible."""
+
 def ask_agent(user_query: str) -> None:
     """
     Function to ask the agent a question and print the response.
@@ -34,7 +36,8 @@ def ask_agent(user_query: str) -> None:
         model=OpenAIChat(id="gpt-4o-mini"),
         knowledge=parse_pdfs,
         search_knowledge=True,
-        instructions=st.session_state['prompt'],
+        description=st.session_state['prompt'],
+        instructions= BASE_PROMPT,
         enable_agentic_knowledge_filters=False,
         show_tool_calls=True,
     )
