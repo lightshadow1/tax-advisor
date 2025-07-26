@@ -1,11 +1,23 @@
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.models.google import Gemini
+from persona import Personas
 
 from pdf2embed import parse_pdfs
 
 from dotenv import load_dotenv
 import streamlit as st
+
+persona_lookup = {
+    'G.A.B.E': Personas.GABE,
+    'The Beaver': Personas.BEAVER,
+    'Maple': Personas.MAPLE,
+    'Section 245': Personas.SECTION245,
+}
+
+if 'persona' in st.session_state:
+    st.session_state['prompt'] = persona_lookup.get(st.session_state['persona'], Personas.GABE)
+
 
 def ask_agent(user_query: str) -> None:
     """
@@ -22,8 +34,9 @@ def ask_agent(user_query: str) -> None:
         model=OpenAIChat(id="gpt-4o-mini"),
         knowledge=parse_pdfs,
         search_knowledge=True,
-        description="You are a tax consultant in Canada that can answer questions based on the provided documents.",
-        goal="Provide tax advices around possible tax deductions",
+        instructions=st.session_state['prompt'],
+        enable_agentic_knowledge_filters=False,
+        show_tool_calls=True,
     )
 
     if user_query:
@@ -35,7 +48,7 @@ def ask_agent(user_query: str) -> None:
             try:
                 response = agent.run(user_query,
                                      stream=True,
-                                     stream_intermediate_steps=True)
+                                     stream_intermediate_steps=False)
                 for chunk in response:
                     if chunk.content and isinstance(chunk.content, str):
                         if "search_knowledge_base" in chunk.content:
@@ -53,6 +66,12 @@ def ask_agent(user_query: str) -> None:
 if __name__ == "__main__":
 
     st.title("Tax Consultant Agent")
+    with st.sidebar:
+        st.session_state['persona'] = st.selectbox(
+            "Select a persona",
+            options=list(persona_lookup.keys()),
+            help="Choose the persona that best fits your needs. Each persona has a unique approach to answering tax-related questions.",
+        )
     st.write("Ask the agent a question about Canadian tax deductions based on the provided documents.")
 
     question = st.chat_input("Enter your question:")
